@@ -163,6 +163,7 @@ exp_years = level_to_exp[level_score] if not extracted
 4. **Unit Normalization**: Convert all to Million VND
 
 **KNN Imputation for Missing Values**:
+
 $$\hat{y}_i = \frac{1}{K}\sum_{j \in N_K(i)} y_j$$
 
 - $K=5$ nearest neighbors based on: company type, location, experience, job category
@@ -205,7 +206,9 @@ $$\hat{y}_{\text{RF}} = \frac{1}{M}\sum_{m=1}^{M} \hat{y}_m$$
 
 - `n_estimators=200`: Number of decision trees
 - `max_depth=15`: Prevent overfitting by limiting tree depth
-- **Gini Impurity**: $$\text{Gini} = 1 - \sum_{i=1}^{C} p_i^2$$
+- **Gini Impurity**: 
+
+$$\text{Gini} = 1 - \sum_{i=1}^{C} p_i^2$$
 
 **Strengths**:
 
@@ -222,6 +225,7 @@ $$\hat{y}^{(t)} = \hat{y}^{(t-1)} + \eta \cdot f_t(x)$$
 - $\eta=0.05$: Learning rate (shrinkage)
 
 **Regularization**:
+
 $$L = \sum_{i=1}^{n} \ell(y_i, \hat{y}_i) + \lambda \sum_{j=1}^{T} \Omega(f_j)$$
 
 - $\Omega$: Penalizes model complexity (prevents overfitting)
@@ -252,7 +256,8 @@ $$L = \sum_{i=1}^{n} \ell(y_i, \hat{y}_i) + \lambda \sum_{j=1}^{T} \Omega(f_j)$$
 1. For each minority sample $x_i$, find $K=5$ nearest neighbors
 2. Randomly select neighbor $x_{nn}$
 3. Generate synthetic sample:
-   $$x_{\text{new}} = x_i + \lambda(x_{nn} - x_i), \quad \lambda \in [0,1]$$
+
+$$x_{\text{new}} = x_i + \lambda(x_{nn} - x_i), \quad \lambda \in [0,1]$$
 
 **Effect**:
 
@@ -265,15 +270,19 @@ $$L = \sum_{i=1}^{n} \ell(y_i, \hat{y}_i) + \lambda \sum_{j=1}^{T} \Omega(f_j)$$
 #### **Metrics for Imbalanced Classification**
 
 **Accuracy**: Basic correctness
+
 $$\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}$$
 
 **Precision**: Focus on false positives
+
 $$\text{Precision} = \frac{TP}{TP + FP}$$
 
 **Recall**: Focus on false negatives
+
 $$\text{Recall} = \frac{TP}{TP + FN}$$
 
 **F1-Score**: Harmonic mean (balanced metric)
+
 $$F1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$$
 
 ### Performance Comparison
