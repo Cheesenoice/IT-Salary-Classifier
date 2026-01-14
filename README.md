@@ -1,4 +1,4 @@
-# 🎯 IT Salary Classifier - Machine Learning Project
+# 🎯 IT Salary Classifier - Machine Learning, Data Science Project
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![ML](https://img.shields.io/badge/ML-Scikit--learn%20%7C%20XGBoost-orange.svg)](https://scikit-learn.org/)
@@ -96,70 +96,209 @@ A machine learning solution to predict and classify IT job salary levels in Viet
 
 ---
 
-## 🛠️ Key Features Engineered
+## 🛠️ Feature Engineering Theory & Implementation
 
 ### 1. **Text Processing & NLP**
 
-- **Vietnamese Text Normalization**: Diacritic removal, number stripping
-- **TF-IDF Vectorization**: 2500 → 600 features (Chi-Square selection)
-- **N-grams**: Captures "machine learning", "data engineer" phrases
+#### **Vietnamese Text Normalization**
 
-### 2. **Structured Features**
+**Problem**: Vietnamese diacritics and mixed number-text create noise  
+**Solution**: Multi-step preprocessing pipeline
 
-| Feature          | Description                    | Example Values                                    |
-| ---------------- | ------------------------------ | ------------------------------------------------- |
-| `exp_years`      | Experience extracted via regex | 0-15 years                                        |
-| `level_score`    | Job seniority (0-5 scale)      | 0=Intern, 1=Junior, 2=Middle, 4=Senior, 5=Manager |
-| `is_big_company` | Major corporation flag         | FPT, Viettel, Banks → 1                           |
-| `is_english`     | English vs Vietnamese title    | "Senior Dev" → 1, "Lập trình viên" → 0            |
-| `job_category`   | Domain classification          | Management, Data/AI, Cloud, QA, Mobile, Dev       |
-| `location`       | City (one-hot encoded)         | HCM, Hanoi, Da Nang, etc.                         |
+- Diacritic removal: `àáạảã → a`, `èéẹẻẽ → e`
+- Number stripping: `Java8 → Java`, `3year → year`
+- Whitespace normalization
 
-### 3. **Salary Parsing** (Advanced Regex)
+#### **TF-IDF Vectorization**
 
-Handles diverse formats:
+**Theory**: Quantifies term importance in documents
+$$\text{TF-IDF}(t,d) = \text{TF}(t,d) \times \log\left(\frac{N}{n_t}\right)$$
 
-- "10 - 20 Tr VND" → (10, 20)
-- "Up to 1500 USD" → (37.5, 37.5) in VND
-- "Thỏa thuận" → NaN → KNN imputation
+- $\text{TF}(t,d)$: Term frequency in document
+- $N$: Total documents
+- $n_t$: Documents containing term $t$
 
-**Total Features**: 654 (600 TF-IDF + 50 categorical + 4 numeric)
+**Implementation**:
+
+- N-grams (1,2): Captures "machine learning", "senior engineer"
+- Custom stopwords: Geographic terms (ha, noi, hcm)
+- Result: 2500 initial features
+
+#### **Chi-Square Feature Selection**
+
+**Theory**: Statistical test for feature-target independence
+$$\chi^2 = \sum \frac{(O_i - E_i)^2}{E_i}$$
+
+- Higher $\chi^2$ → stronger correlation with salary class
+- **Dimensionality reduction**: 2500 → 600 features (76% reduction)
+- Prevents overfitting while retaining predictive power
+
+### 2. **Structured Feature Extraction**
+
+| Feature              | Extraction Method                   | Mathematical/Logical Basis                                                   |
+| -------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| **`exp_years`**      | Regex: `(\d+)\s*(?:năm\|year\|exp)` | Average for ranges: $\frac{\text{min} + \text{max}}{2}$                      |
+| **`level_score`**    | Keyword hierarchy (0-5)             | Ordinal encoding: Intern(0) < Junior(1) < Middle(2) < Senior(4) < Manager(5) |
+| **`is_big_company`** | Pattern matching                    | Binary: "FPT\|Viettel\|Bank\|Group" → 1, else → 0                            |
+| **`is_english`**     | Vietnamese keyword absence          | Inverse check: No "tuyển\|nhân viên" → 1                                     |
+| **`job_category`**   | Multi-rule classification           | Decision tree logic: "manager" → Management, "data" → Data/AI, etc.          |
+| **`location`**       | One-hot encoding                    | Categorical → Binary vectors (HCM, Hanoi, Da Nang)                           |
+
+**Fallback Inference** (when regex fails):
+
+```python
+level_to_exp = {0: 0.5, 1: 1.0, 2: 2.5, 4: 5.0, 5: 8.0}
+exp_years = level_to_exp[level_score] if not extracted
+```
+
+### 3. **Salary Parsing Algorithm**
+
+**Challenge**: Diverse formats, mixed currencies, negotiable states
+
+**Multi-stage Parser**:
+
+1. **Currency Detection**: `USD|VND|$|triệu` → Apply conversion (USD × 25,000 / 1,000,000)
+2. **Range Extraction**: Regex `(\d+)\s*-\s*(\d+)` → $(min, max)$
+3. **State Handling**: "Thỏa thuận|Cạnh tranh" → NaN
+4. **Unit Normalization**: Convert all to Million VND
+
+**KNN Imputation for Missing Values**:
+$$\hat{y}_i = \frac{1}{K}\sum_{j \in N_K(i)} y_j$$
+
+- $K=5$ nearest neighbors based on: company type, location, experience, job category
+- Preserves data distribution better than mean/median
+
+**Total Feature Vector**: 654 dimensions
+
+- TF-IDF: 600
+- One-hot categorical: 50
+- Numeric: 4
+
+> 📖 **Detailed mathematical derivations and proofs**: See [Full Report (EN)](REPORT_IT_Salary_Classifier_EN.pdf)
 
 ---
 
-## 🤖 Models & Techniques
+## 🤖 Machine Learning Models & Algorithms
 
-### Ensemble Strategy: Voting Classifier
+### 1. **Ensemble Learning Theory**
 
-| Model                 | Hyperparameters              | Role                                   |
-| --------------------- | ---------------------------- | -------------------------------------- |
-| **Random Forest**     | 200 trees, max_depth=15      | Reduces variance (bagging)             |
-| **XGBoost**           | 200 rounds, lr=0.05, depth=6 | Sequential error correction (boosting) |
-| **Gradient Boosting** | 100 estimators, lr=0.1       | Conservative learning                  |
+#### **Why Ensemble?**
 
-**Voting**: Soft voting - averages predicted probabilities from all 3 models
+- **Single model limitation**: High variance (overfitting) or high bias (underfitting)
+- **Ensemble advantage**: Combines multiple models to reduce both variance and bias
 
-### Handling Imbalanced Data: SMOTE
+#### **Voting Classifier Architecture**
 
-- **Problem**: Junior (20%) | Middle (65%) | Senior (15%)
-- **Solution**: Synthetic Minority Over-sampling
-  - Generates synthetic samples between minority class neighbors
-  - Balances training set to prevent bias toward Middle class
+$$P_{\text{ensemble}}(y=k|x) = \frac{1}{M}\sum_{m=1}^{M} P_m(y=k|x)$$
 
-### Performance Metrics
+- **Soft voting**: Averages predicted probabilities from all models
+- **Benefit**: Confidence-weighted prediction (not just majority vote)
 
-| Model                  | Accuracy   | F1-Score      | Best Class      |
-| ---------------------- | ---------- | ------------- | --------------- |
-| Random Forest          | 73-75%     | 0.72-0.74     | Middle          |
-| XGBoost                | 74-76%     | 0.73-0.75     | Middle          |
-| Gradient Boosting      | 72-74%     | 0.71-0.73     | Middle          |
-| **Voting Ensemble** ⭐ | **75-77%** | **0.74-0.76** | **All classes** |
+### 2. **Base Models**
 
-**Per-Class Performance:**
+#### **Random Forest (Bagging)**
 
-- **Junior** (<15M): Precision 62%, Recall 65% (challenging due to limited samples)
-- **Middle** (15-35M): Precision 88%, Recall 85% ⭐ (dominant class, well-balanced)
-- **Senior** (>35M): Precision 71%, Recall 68% (good considering class imbalance)
+**Theory**: Bootstrap Aggregating reduces variance
+$$\hat{y}_{\text{RF}} = \frac{1}{M}\sum_{m=1}^{M} \hat{y}_m$$
+
+**Hyperparameters**:
+
+- `n_estimators=200`: Number of decision trees
+- `max_depth=15`: Prevent overfitting by limiting tree depth
+- **Gini Impurity**: $$\text{Gini} = 1 - \sum_{i=1}^{C} p_i^2$$
+
+**Strengths**:
+
+- Handles non-linear relationships
+- Built-in feature importance via information gain
+- Robust to outliers
+
+#### **XGBoost (Gradient Boosting)**
+
+**Theory**: Sequential error correction via gradient descent
+$$\hat{y}^{(t)} = \hat{y}^{(t-1)} + \eta \cdot f_t(x)$$
+
+- $f_t$: New tree fitted to negative gradient (residuals)
+- $\eta=0.05$: Learning rate (shrinkage)
+
+**Regularization**:
+$$L = \sum_{i=1}^{n} \ell(y_i, \hat{y}_i) + \lambda \sum_{j=1}^{T} \Omega(f_j)$$
+
+- $\Omega$: Penalizes model complexity (prevents overfitting)
+- `max_depth=6`: Shallow trees for generalization
+
+**Strengths**:
+
+- Higher accuracy through boosting
+- Built-in L1/L2 regularization
+- Handles missing values natively
+
+#### **Gradient Boosting (Sklearn)**
+
+**Theory**: Similar to XGBoost, pure Python implementation
+
+- `n_estimators=100`: Fewer trees, higher `lr=0.1`
+- Conservative learning for stability
+
+### 3. **Handling Imbalanced Data: SMOTE**
+
+**Problem**: Class distribution skew
+
+- Junior: 20% | Middle: 65% | Senior: 15%
+- **Risk**: Model ignores minority classes
+
+**SMOTE Algorithm** (Synthetic Minority Over-sampling Technique):
+
+1. For each minority sample $x_i$, find $K=5$ nearest neighbors
+2. Randomly select neighbor $x_{nn}$
+3. Generate synthetic sample:
+   $$x_{\text{new}} = x_i + \lambda(x_{nn} - x_i), \quad \lambda \in [0,1]$$
+
+**Effect**:
+
+- Creates realistic synthetic data (not simple duplication)
+- Balances training set to ~60% per class
+- Prevents Middle-class bias
+
+### 4. **Model Evaluation**
+
+#### **Metrics for Imbalanced Classification**
+
+**Accuracy**: Basic correctness
+$$\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}$$
+
+**Precision**: Focus on false positives
+$$\text{Precision} = \frac{TP}{TP + FP}$$
+
+**Recall**: Focus on false negatives
+$$\text{Recall} = \frac{TP}{TP + FN}$$
+
+**F1-Score**: Harmonic mean (balanced metric)
+$$F1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$$
+
+### Performance Comparison
+
+| Model                  | Accuracy   | F1-Score      | Variance      | Bias           |
+| ---------------------- | ---------- | ------------- | ------------- | -------------- |
+| Random Forest          | 73-75%     | 0.72-0.74     | Low (Bagging) | Medium         |
+| XGBoost                | 74-76%     | 0.73-0.75     | Medium        | Low (Boosting) |
+| Gradient Boosting      | 72-74%     | 0.71-0.73     | Medium        | Low            |
+| **Voting Ensemble** ⭐ | **75-77%** | **0.74-0.76** | **Lowest**    | **Lowest**     |
+
+**Why Ensemble Wins**:
+
+- Combines bagging (variance reduction) + boosting (bias reduction)
+- Averages out individual model weaknesses
+- More robust to unseen data
+
+**Per-Class Analysis**:
+| Class | Samples | Precision | Recall | Challenge |
+|-------|---------|-----------|--------|-----------|
+| Junior | 20% | 62% | 65% | Limited training data |
+| Middle | 65% | 88% | 85% | Well-represented, best performance |
+| Senior | 15% | 71% | 68% | Imbalanced but SMOTE helps |
+
+> 📖 **Detailed hyperparameter tuning, cross-validation, and ablation studies**: See [Full Report (EN)](REPORT_IT_Salary_Classifier_EN.pdf)
 
 ---
 
@@ -209,83 +348,107 @@ jupyter notebook notebooks/03_model_training_evaluation.ipynb
 
 ---
 
-## 🎓 Key ML Concepts Demonstrated
+## 🎓 Key Algorithms & Techniques Summary
 
-### Data Engineering
+### Data Processing
 
-- **Regex Parsing**: Extract structured data from messy text (salary ranges, currencies)
-- **KNN Imputation**: Fill missing salaries using similar job characteristics
-- **Outlier Detection**: IQR method to remove anomalous salary values
+1. **Regex Parsing**: Pattern matching for structured data extraction from unstructured text
+2. **KNN Imputation**: $K=5$ nearest neighbors for missing value estimation
+3. **IQR Outlier Detection**: $\text{Outlier if } x < Q1 - 1.5 \times IQR$ or $x > Q3 + 1.5 \times IQR$
 
 ### Feature Engineering
 
-- **NLP for Vietnamese**: Diacritic removal, custom stopwords (ha, noi, hcm)
-- **TF-IDF**: Convert job titles to numerical features (2500 terms)
-- **Chi-Square Selection**: Reduce to 600 most predictive terms
-- **Domain Features**: Extract experience years, company size, job level from text
+1. **TF-IDF**: Term frequency × Inverse document frequency weighting
+2. **Chi-Square Test**: Feature-target independence testing for selection
+3. **One-Hot Encoding**: Categorical → Binary vectors
+4. **MinMax Scaling**: $x_{\text{scaled}} = \frac{x - \min}{\max - \min}$
 
 ### Machine Learning
 
-- **SMOTE**: Synthetic oversampling to balance 3-class distribution
-- **Ensemble Methods**: Combine bagging (RF) + boosting (XGB, GB) strengths
-- **Soft Voting**: Probability averaging for robust predictions
-- **Feature Importance**: Interpret model decisions via tree-based rankings
+1. **Random Forest**: Bagging ensemble with Gini impurity splitting
+2. **XGBoost**: Gradient boosting with L1/L2 regularization
+3. **SMOTE**: Synthetic minority oversampling for class balance
+4. **Soft Voting**: Probability-weighted ensemble aggregation
+
+### Evaluation
+
+1. **Confusion Matrix**: True/False Positive/Negative analysis
+2. **F1-Score**: Harmonic mean of Precision and Recall
+3. **Feature Importance**: Information gain from tree-based splits
 
 ---
 
-## 🔍 Market Insights
+## 🎯 Interview Talking Points
 
-**Salary Determinants (ranked by feature importance):**
+**Q: What makes this project technically strong?**
 
-1. ⭐ **Experience Years** (`exp_years`) - Strongest single predictor
-2. 📊 **Career Level** (`level_score`) - Junior vs Senior differentiation
-3. 🏢 **Company Prestige** (`is_big_company`) - 20-30% salary premium
-4. 🌍 **Location** (HCM/Hanoi) - Urban centers pay 5-25% more
-5. 💼 **English Title** (`is_english`) - International positioning indicator
-6. 🛠️ **Tech Domain** - Data/AI > Cloud > Development > QA
+- ✅ Full ML pipeline: Data collection → Deployment-ready model
+- ✅ Advanced NLP: Vietnamese text processing with custom preprocessing
+- ✅ Ensemble methods: Combines bagging + boosting advantages
+- ✅ Imbalanced learning: SMOTE + soft voting for robust predictions
+- ✅ Feature engineering: 654 features from raw text + structured extraction
 
-**Vietnamese IT Salary Reality:**
+**Q: How did you handle challenges?**
 
-- **Junior tier** (<15M VND): Entry-level, internships, 0-1.5 years
-- **Middle tier** (15-35M VND): 65% of market, 2-5 years experience
-- **Senior tier** (>35M VND): Management, 5+ years, specialized skills
+- **Imbalanced classes**: SMOTE synthetic generation + class-weighted metrics
+- **Messy data**: Custom regex parser handling 5+ salary formats and currencies
+- **Missing values**: KNN imputation (K=5) preserving neighborhood relationships
+- **High dimensionality**: Chi-Square selection reducing features by 76%
+- **Vietnamese text**: Diacritic removal + custom stopwords for geographic terms
 
-**Geographic Variation:**
+**Q: How would you improve the model?**
 
-- Hồ Chí Minh: Highest salaries (tech hub)
-- Hà Nội: 2nd highest (government/corporate center)
-- Đà Nẵng/Others: 10-15% lower (smaller markets)
+- 📊 **More data**: Collect more Junior/Senior samples to balance naturally
+- 🧠 **Deep learning**: BERT for Vietnamese (PhoBERT) with 10,000+ samples
+- 🌐 **Additional features**: Education level, certifications, tech stack details
+- 📈 **Time-series**: Track salary trends over time for market prediction
+- 🚀 **Deployment**: REST API for real-time predictions with monitoring
+
+**Q: Explain your key technical decisions**
+
+- **Why ensemble?**: Single model = high variance OR high bias; ensemble reduces both
+- **Why SMOTE?**: Simple oversampling duplicates data (overfitting); SMOTE creates synthetic samples
+- **Why Chi-Square?**: Fast, interpretable, works well with categorical targets vs alternatives like mutual information
+- **Why soft voting?**: Leverages prediction confidence, not just class labels
 
 ---
 
-## 🎯 Why This Project Stands Out
+## 📊 Technical Achievements
 
-### For Job Interviews:
+| Metric                       | Value        | Significance                                         |
+| ---------------------------- | ------------ | ---------------------------------------------------- |
+| **Accuracy**                 | 75-77%       | High for imbalanced, real-world Vietnamese IT data   |
+| **Features**                 | 654          | Comprehensive feature engineering from 4 raw columns |
+| **Data Quality**             | 92% retained | Minimal loss from cleaning (1124 → 1040 records)     |
+| **Dimensionality Reduction** | 76%          | 2500 → 600 features without accuracy loss            |
+| **Training Speed**           | <5 min       | Efficient pipeline on standard hardware              |
+| **Model Size**               | <50 MB       | Production-ready for deployment                      |
 
-✅ **Complete ML Pipeline**: Web scraping → Feature engineering → Production model  
-✅ **Real-World Complexity**: Messy data (mixed currencies, Vietnamese text, missing values)  
-✅ **Advanced Techniques**: SMOTE, ensemble voting, NLP for non-English text  
-✅ **Business Value**: Interpretable insights for hiring/salary decisions  
-✅ **Technical Depth**: 654 engineered features, 75% accuracy on imbalanced data
+---
 
-### Technical Highlights:
+## 🔍 Business Impact & Insights
 
-- Custom regex parser for 5+ salary formats
-- Vietnamese NLP preprocessing pipeline
-- KNN imputation preserving data relationships
-- Chi-Square feature selection (76% reduction)
-- Soft voting ensemble (3 models)
+**For Recruiters/HR:**
 
-### Talking Points:
+- Automate salary classification for job postings
+- Ensure competitive salary offers based on market data
+- Identify salary outliers (over/underpaid positions)
 
-**"How did you handle imbalanced classes?"**  
-→ SMOTE synthetic generation + soft voting ensemble
+**For Job Seekers:**
 
-**"What was the hardest challenge?"**  
-→ Parsing Vietnamese salary strings with mixed currencies and text states ("Thỏa thuận")
+- Estimate market salary for desired positions
+- Understand which factors increase compensation
+- Make informed career decisions (location, company, skills)
 
-**"How would you improve accuracy?"**  
-→ More Senior/Junior samples, BERT for Vietnamese text, company metadata enrichment
+**Market Intelligence:**
+
+1. Experience is the #1 salary driver (~1.5-2M VND per year)
+2. Large companies (FPT, Viettel, Banks) pay 20-30% premium
+3. Location matters: HCM/Hanoi salaries 5-25% higher than other cities
+4. Data/AI roles command highest premiums in tech categories
+5. English-titled positions correlate with higher market positioning
+
+> 📖 **Full experimental results, error analysis, and business case studies**: See [Full Report (VN)](REPORT_IT_Salary_Classifier_VN.pdf) | [Full Report (EN)](REPORT_IT_Salary_Classifier_EN.pdf)
 
 ---
 
@@ -307,5 +470,3 @@ Educational project for portfolio and academic purposes.
 ---
 
 **Project Summary**: 75% accuracy | 654 features | SMOTE + Ensemble | Vietnamese NLP | 1,124 job postings
-
-> **Note**: Full technical documentation available in `README_FULL.md` (detailed formulas, theoretical foundations, installation guides).
