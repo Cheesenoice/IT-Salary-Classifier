@@ -6,7 +6,10 @@
 
 A machine learning solution to predict and classify IT job salary levels in Vietnam using NLP, ensemble methods, and feature engineering techniques.
 
-📄 **Full Reports**: [English Version]([REPORT_IT_Salary_Classifier_EN.pdf](https://drive.google.com/file/d/1FRTw_dkLN0UmjlSVK30N8Gx76h1bieoV/view?usp=sharing)) | [Vietnamese Version]([REPORT_IT_Salary_Classifier_VN.pdf](https://drive.google.com/file/d/1cM5h0P5e2L276Zk3I5ORBH5tbi6RZk_e/view?usp=sharing))
+## 📄 Full Reports
+- 🇬🇧 [English Version](https://drive.google.com/file/d/1FRTw_dkLN0UmjlSVK30N8Gx76h1bieoV/view)
+- 🇻🇳 [Vietnamese Version](https://drive.google.com/file/d/1cM5h0P5e2L276Zk3I5ORBH5tbi6RZk_e/view)
+
 
 ---
 
