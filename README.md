@@ -6,10 +6,12 @@
 
 A machine learning solution to predict and classify IT job salary levels in Vietnam using NLP, ensemble methods, and feature engineering techniques.
 
+This project was developed as part of my university Data Science course in the first semester of the fourth year.
+
 ## 📄 Full Reports
+
 - 🇬🇧 [English Version](https://drive.google.com/file/d/1FRTw_dkLN0UmjlSVK30N8Gx76h1bieoV/view)
 - 🇻🇳 [Vietnamese Version](https://drive.google.com/file/d/1cM5h0P5e2L276Zk3I5ORBH5tbi6RZk_e/view)
-
 
 ---
 
@@ -26,7 +28,7 @@ A machine learning solution to predict and classify IT job salary levels in Viet
 
 ### Case 1: Fresher ReactJS Developer → Junior Tier ✅
 
-![Case 1: Fresher Developer](images/case1.png)
+![Case 1: Fresher Developer](github-assets/case1.png)
 
 **Input**: "Fresher ReactJS – Mới tốt nghiệp" | Location: Hồ Chí Minh  
 **Prediction**: Junior (<15M VND) | **Confidence**: 69.55%  
@@ -36,7 +38,7 @@ A machine learning solution to predict and classify IT job salary levels in Viet
 
 ### Case 2: IT Manager at Large Corp → Senior Tier ✅
 
-![Case 2: IT Manager](images/case2.png)
+![Case 2: IT Manager](github-assets/case2.png)
 
 **Input**: "Trưởng phòng CNTT (IT Manager)" | Company: Tập đoàn lớn | Location: Hà Nội  
 **Prediction**: Senior (>35M VND) | **Confidence**: 72.79%  
@@ -46,7 +48,7 @@ A machine learning solution to predict and classify IT job salary levels in Viet
 
 ### Case 3: Java Developer (2 years) → Middle Tier ✅
 
-![Case 3: Java Developer](images/case3.png)
+![Case 3: Java Developer](github-assets/case3.png)
 
 **Input**: "Lập trình viên Java (2 năm kinh nghiệm)" | Location: Đà Nẵng  
 **Prediction**: Middle (15-35M VND) | **Confidence**: 62.41%  
@@ -56,21 +58,18 @@ A machine learning solution to predict and classify IT job salary levels in Viet
 
 ## 📊 What Drives IT Salaries? Feature Importance
 
-![Feature Importance](images/top20-feature.png)
+![Feature Importance](github-assets/top20-feature.png)
 
 **Top Salary Predictors:**
 
 1. **Experience & Level** (`exp_years`, `level_score`) - Primary drivers
-
    - Each additional year → ~1.5-2M VND increase
    - Senior/Manager titles → 2-3x higher salaries
 
 2. **Company Size** (`is_big_company`) - 20-30% premium
-
    - FPT, Viettel, Banking Groups, Samsung pay significantly more
 
 3. **English Keywords** - Strong indicators for high salaries
-
    - "Senior", "Manager", "Lead", "Architect" → Senior tier
 
 4. **Location** - Geographic salary variation
@@ -78,24 +77,9 @@ A machine learning solution to predict and classify IT job salary levels in Viet
 
 ---
 
-## 🔧 Technical Pipeline
+## 🔧 Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Stage 1: Data Cleaning                                       │
-│ Raw CSV → Salary Parsing (Regex) → KNN Imputation → SQLite  │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Stage 2: Feature Engineering                                 │
-│ Text Normalization → TF-IDF → Category Extraction → Scaling │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Stage 3: Model Training                                      │
-│ SMOTE Balancing → Ensemble Training → Evaluation            │
-└─────────────────────────────────────────────────────────────┘
-```
+![Architecture](github-assets/architecture.png)
 
 ---
 
@@ -113,6 +97,8 @@ A machine learning solution to predict and classify IT job salary levels in Viet
 - Whitespace normalization
 
 #### **TF-IDF Vectorization**
+
+![Word Cloud from Job Descriptions](github-assets/word-cloud.png)
 
 **Theory**: Quantifies term importance in documents
 $$\text{TF-IDF}(t,d) = \text{TF}(t,d) \times \log\left(\frac{N}{n_t}\right)$$
@@ -167,6 +153,8 @@ exp_years = level_to_exp[level_score] if not extracted
 
 **KNN Imputation for Missing Values**:
 
+![KNN Imputation Visualization](github-assets/KNN-imputer.png)
+
 $$\hat{y}_i = \frac{1}{K}\sum_{j \in N_K(i)} y_j$$
 
 - $K=5$ nearest neighbors based on: company type, location, experience, job category
@@ -209,7 +197,7 @@ $$\hat{y}_{\text{RF}} = \frac{1}{M}\sum_{m=1}^{M} \hat{y}_m$$
 
 - `n_estimators=200`: Number of decision trees
 - `max_depth=15`: Prevent overfitting by limiting tree depth
-- **Gini Impurity**: 
+- **Gini Impurity**:
 
 $$\text{Gini} = 1 - \sum_{i=1}^{C} p_i^2$$
 
@@ -270,6 +258,8 @@ $$x_{\text{new}} = x_i + \lambda(x_{nn} - x_i), \quad \lambda \in [0,1]$$
 
 ### 4. **Model Evaluation**
 
+![Confusion Matrix - Voting Ensemble](github-assets/confusion-matrix.png)
+
 #### **Metrics for Imbalanced Classification**
 
 **Accuracy**: Basic correctness
@@ -320,11 +310,15 @@ $$F1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + 
 IT_Salary_Classifier/
 ├── data/
 │   └── jobs_it.csv                    # Raw dataset (1,124 records)
-├── images/
+├── github-assets/
 │   ├── case1.png                      # Demo: Fresher prediction
 │   ├── case2.png                      # Demo: Manager prediction
 │   ├── case3.png                      # Demo: Developer prediction
-│   └── top20-feature.png              # Feature importance chart
+│   ├── top20-feature.png              # Feature importance chart
+│   ├── architecture.png               # End-to-end pipeline architecture
+│   ├── word-cloud.png                 # Text distribution visualization
+│   ├── KNN-imputer.png                # Missing value imputation illustration
+│   └── confusion-matrix.png           # Voting model confusion matrix
 ├── models/
 │   └── wrong_prediction_cases.csv     # Error analysis
 ├── notebooks/
